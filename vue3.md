@@ -124,6 +124,8 @@ onRenderTracked
 onRenderTriggered
 ```
 
+兼容Options Api
+
 
 ## Performance
 1. 编译模板优化
@@ -151,11 +153,12 @@ onRenderTriggered
     HOISTED = -1,  // 特殊标志是负整数表示永远不会用作diff,只需检查 patchFlag === FLAG.
     BAIL = -2 // 一个特殊的标志，指代差异算法
   }
+  //组合类型
 ```
-
+    vue2 patch仍然会遍历静态结点，如果判断是static则return，vue3 patch的时候只比较动态结点。
+  
   - 静态结点会被缓存，而不是每次重新创建
   
-
     ```html代码```
     ```html
     <div id="app">
@@ -235,28 +238,40 @@ onRenderTriggered
     ```
 1. diff算法优化
     ```js  
-    // old arr
-    ["a", "b", "c", "d", "e", "f", "g", "h"]
-    // new arr
-    ["a", "b", "d", "f", "c", "e", "x", "y", "g", "h"]
+    //  old arr
+    ["a","b","c","d","e","f","g"]
+
+    // new arr 
+    ["a","c","d","b","f","i","g"]
     ```
     1. 从左往右，相同结点进入patch，从右往左比较，相同结点patch
     2. 比较完成若旧数组有剩余，则是被删除的结点进入unmounted，若新数组有剩余结点，则是新增的结点。
-    3. 如果还有剩余结点，说明是乱序的。建立新数据的index的map。
+    3. 如果还有剩余结点，说明是乱序的。建立新数据的keyToNewIndexMap。
+      
        ```js
+       [ "b", "c", "d", "e", "f"]  //old
+       [ "c", "d", "b", "f", "i"]  //new
+       //建立新数据的keyToNewIndexMap
         {
-          d=>2,
+          c=>0,
+          d=>1,
+          b=>2,
           f=>3,
-          c=>4,
-          e=>5,
-          x=>6,
-          y=>7
+          i=>4
         }
         ```
-        初始化一个长度为新数组中剩余数据的数组，初始值为0。```[0,0,0,0,0,0]```
+        初始化一个长度为新数组中剩余数据的数组newIndexToOldIndexMap，初始值为0。```[0,0,0,0,0]```
 
-        遍历旧数组，填充坐标。```[4,6,3,5,0,0]```
+        遍历旧数组，填充坐标。```[2,3,1,5,0]```
+        
+        在没有找到新数组中坐标的说明是被删除，执行unmounted
 
+        newIndexToOldIndexMap中是0的说明是新增的，执行mounted
+        
+        其他的是排序的，执行patch并且移动。
+
+        根据最长递增子序列减少移动次数。
+        
 
 
 
@@ -272,14 +287,12 @@ onRenderTriggered
 
 ## Fragments
 不再限制组件中必须提供根节点。
-1. &lt;Teleport&gt;
+## &lt;Teleport&gt;
    https://juejin.im/post/5ee8301851882543423445ed
-2. &lt;Suspense&gt;
+## &lt;Suspense&gt;
    https://juejin.im/post/5ee8301851882543423445ed
 
 ## TypeScript支持
-
-## Custom Render API
 
 ## Vite
 

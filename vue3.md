@@ -1,5 +1,130 @@
 # Vue3.0
 
+
+## Composition Api
+
+Vue2写法
+```html
+<template>
+  <button @click="increment">
+    Count is: {{ count }}, double is: {{ double }}
+  </button>
+</template>
+
+<script>
+
+export default {
+
+  data() {
+    return {
+      count: 0,
+    };
+  },
+  computed: {
+    double() {
+      return this.count * 2;
+    },
+  },
+  methods: {
+    increment() {
+      this.count += 1;
+    },
+  },
+  created(){
+
+  },
+  mounted(){
+
+  },
+  //....
+
+};
+</script>
+
+```
+
+Vue3写法
+```html
+<template>
+  <button @click="increment">
+    Count is: {{ state.count }}, double is: {{ state.double }}
+  </button>
+</template>
+
+<script>
+import { reactive, computed } from 'vue';
+
+export default {
+  setup() {
+    const state = reactive({
+      count: 0,
+      double: computed(() => state.count * 2),
+    });
+
+    function increment() {
+      state.count += 1;
+    }
+    
+    onMounted(() => {
+      //todo
+    })
+  
+    //...
+    return {
+      state,
+      increment,
+    };
+  },
+};
+</script>
+```
+
+可以实现更灵活且无副作用的复用代码
+
+```js
+import {
+  reactive, onMounted, onUnmounted, toRefs,
+} from 'vue';
+
+function useMouse() {
+  const state = reactive({
+    x: 0,
+    y: 0,
+  });
+  const update = (e) => {
+    state.x = e.pageX;
+    state.y = e.pageY;
+  };
+  onMounted(() => {
+    window.addEventListener('mousemove', update);
+  });
+  onUnmounted(() => {
+    window.removeEventListener('mousemove', update);
+  });
+  return toRefs(state);
+}
+
+export default useMouse;
+
+```
+
+生命周期函数
+```
+beforeCreate -> 使用 setup()
+created -> 使用 setup()
+beforeMount -> onBeforeMount
+mounted -> onMounted
+beforeUpdate -> onBeforeUpdate
+updated -> onUpdated
+beforeDestroy -> onBeforeUnmount
+destroyed -> onUnmounted
+errorCaptured -> onErrorCaptured
+
+onRenderTracked
+onRenderTriggered
+```
+
+
 ## Performance
 1. 编译模板优化
    
@@ -7,46 +132,66 @@
 
   - Vue2.X模板编译网站：https://codesandbox.io/s/github/vuejs/vuejs.org/tree/master/src/v2/examples/vue-20-template-compilation?from-embed
   - patchflag
+  
+  ```js
+  export const enum PatchFlags {
+    
+    TEXT = 1,// 表示具有动态textContent的元素
+    CLASS = 1 << 1,  // 表示有动态Class的元素
+    STYLE = 1 << 2,  // 表示动态样式（静态如style="color: red"，也会提升至动态）
+    PROPS = 1 << 3,  // 表示具有非类/样式动态道具的元素。
+    FULL_PROPS = 1 << 4,  // 表示带有动态键的道具的元素，与上面三种相斥
+    HYDRATE_EVENTS = 1 << 5,  // 表示带有事件监听器的元素
+    STABLE_FRAGMENT = 1 << 6,   // 表示其子顺序不变的片段（没懂）。 
+    KEYED_FRAGMENT = 1 << 7, // 表示带有键控或部分键控子元素的片段。
+    UNKEYED_FRAGMENT = 1 << 8, // 表示带有无key绑定的片段
+    NEED_PATCH = 1 << 9,   // 表示只需要非属性补丁的元素，例如ref或hooks
+    DYNAMIC_SLOTS = 1 << 10,  // 表示具有动态插槽的元素
+    // 特殊 FLAGS -------------------------------------------------------------
+    HOISTED = -1,  // 特殊标志是负整数表示永远不会用作diff,只需检查 patchFlag === FLAG.
+    BAIL = -2 // 一个特殊的标志，指代差异算法
+  }
+```
 
   - 静态结点会被缓存，而不是每次重新创建
   
 
-      ```html代码```
-      ```html
-      <div id="app">
-        <span>这些结点</span>
-        <span>都是静态结点</span>
-        <span>而这个不是{{vue}}</span>
-      </div>
-      ```
-      ```编译为render函数```
-      ```js
-      import { createVNode as _createVNode, toDisplayString as _toDisplayString, openBlock as _openBlock, createBlock as _createBlock } from "vue"
+    ```html代码```
+    ```html
+    <div id="app">
+      <span>这些结点</span>
+      <span>都是静态结点</span>
+      <span>而这个不是{{vue}}</span>
+    </div>
+    ```
+    ```编译为render函数```
+    ```js
+    import { createVNode as _createVNode, toDisplayString as _toDisplayString, openBlock as _openBlock, createBlock as _createBlock } from "vue"
 
-      const _hoisted_1 = { id: "app" }
-      const _hoisted_2 = /*#__PURE__*/_createVNode("span", null, "这些结点", -1 /* HOISTED */)
-      const _hoisted_3 = /*#__PURE__*/_createVNode("span", null, "都是静态结点", -1 /* HOISTED */)
+    const _hoisted_1 = { id: "app" }
+    const _hoisted_2 = /*#__PURE__*/_createVNode("span", null, "这些结点", -1 /* HOISTED */)
+    const _hoisted_3 = /*#__PURE__*/_createVNode("span", null, "都是静态结点", -1 /* HOISTED */)
 
-      export function render(_ctx, _cache) {
-        return (_openBlock(), _createBlock("div", _hoisted_1, [
-          _hoisted_2,
-          _hoisted_3,
-          _createVNode("span", null, "而这个不是" + _toDisplayString(_ctx.vue), 1 /* TEXT */)
-        ]))
+    export function render(_ctx, _cache) {
+      return (_openBlock(), _createBlock("div", _hoisted_1, [
+        _hoisted_2,
+        _hoisted_3,
+        _createVNode("span", null, "而这个不是" + _toDisplayString(_ctx.vue), 1 /* TEXT */)
+      ]))
+    }
+    ```
+    ```js
+    function anonymous() {
+      with(this) {
+        return _c('div', {
+          attrs: {
+            "id": "app"
+          }
+        }, [_c('span', [_v("这些结点")]), _c('span', [_v("都是静态结点")]), _c('span', [_v("而这个不是" + _s(
+          vue))])])
       }
-      ```
-      ```js
-      function anonymous() {
-        with(this) {
-          return _c('div', {
-            attrs: {
-              "id": "app"
-            }
-          }, [_c('span', [_v("这些结点")]), _c('span', [_v("都是静态结点")]), _c('span', [_v("而这个不是" + _s(
-            vue))])])
-        }
-      }
-      ```
+    }
+    ```
   - 事件监听缓存: cacheHandlers
 
     在vue2中，针对节点绑定的事件，每次触发都要重新生成全新的function去更新，在vue3中，当cacheHandlers开启的时候，编译会自动生成一个内联函数，将其变成一个静态节点。
@@ -88,7 +233,7 @@
       ]))
     }
     ```
-2. diff算法优化
+1. diff算法优化
     ```js  
     // old arr
     ["a", "b", "c", "d", "e", "f", "g", "h"]

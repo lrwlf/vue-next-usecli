@@ -1,36 +1,26 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <HelloWorld/>
-    <div>{{counter}}</div>
-    <button @click="addCount">+1</button>
-  </div>
+  <button @click="increment">
+    Count is: {{ state.count }}, double is: {{ state.double }}
+  </button>
 </template>
 
 <script>
-// @ is an alias to /src
-import HelloWorld from '@/components/HelloWorld.vue';
-import {
-  ref,
-  provide,
-} from 'vue';
+import { reactive, computed } from 'vue';
 
 export default {
-  name: 'Home',
-  components: {
-    HelloWorld,
-  },
   setup() {
-    const counter = ref(0);
-    provide('counter', counter);
-    function addCount() {
-      counter.value += 1;
+    const state = reactive({
+      count: 0,
+      double: computed(() => state.count * 2),
+    });
+
+    function increment() {
+      state.count += 1;
     }
     return {
-      counter,
-      addCount,
+      state,
+      increment,
     };
   },
-
 };
 </script>

@@ -1,16 +1,17 @@
 <template>
   <div class="about">
-    <h1>This is an about page {{counter}}</h1>
+    <h1>鼠标位置为：({{x}},{{y}})</h1>
   </div>
 </template>
 <script>
-import { inject, ref } from 'vue';
+import useMouse from '../utils/mouse';
 
 export default {
   setup() {
-    const counter = inject('counter', ref(999));
+    const { x, y } = useMouse();
     return {
-      counter,
+      x,
+      y,
     };
   },
 };

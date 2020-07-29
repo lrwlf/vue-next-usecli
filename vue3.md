@@ -264,9 +264,9 @@ onRenderTriggered
 
         遍历旧数组，填充坐标。```[2,3,1,5,0]```
         
-        在没有找到新数组中坐标的说明是被删除，执行unmounted
+        在没有找到新数组中坐标的说明是被删除，执行unmounted  (e)
 
-        newIndexToOldIndexMap中是0的说明是新增的，执行mounted
+        newIndexToOldIndexMap中是0的说明是新增的，执行mounted (i)
         
         其他的是排序的，执行patch并且移动。
 
